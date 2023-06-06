@@ -17,6 +17,10 @@ sock_client, sock_adress = server_socket.accept()
 print(f'Клиент подключен: [*{sock_adress}*]  [*{sock_client}*]')
 
 
+# обработка комманд cmd
+while True:
+    cmd = sock_client.recv(1024).decode('utf-8')
+    print(f'Сообщение от клиента {cmd}')
 
 
 
