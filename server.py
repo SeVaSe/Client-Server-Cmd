@@ -28,11 +28,31 @@ while True:
 
 
     try:
-        # выполнение команд
-        output = subprocess.check_output(cmd, shell=True)
-        answer = output.decode('utf-8')
+        #  Создается новый процесс, в котором выполняется команда cmd. shell=True указывает на то, что команда будет выполнена через командную оболочку
+        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                   stdin=subprocess.PIPE)
+        output, error = process.communicate()
+
+        # проверка винда или линукс это, для установки соотвествующей кодировки
+        if output:
+            if os.name == 'nt':
+                answer = output.decode('cp866')
+            else:
+                answer = output.decode('utf-8')
+        else:
+            if os.name == 'nt':
+                answer = error.decode('cp866')
+            else:
+                answer = error.decode('utf-8')
+
+        # # выполнение команд
+        # output = subprocess.check_output(cmd, shell=True)
+        # answer = output.decode('cp866')
     except subprocess.CalledProcessError as e:
         answer = str(e)
 
     # отправка ответа
     sock_client.sendall(answer.encode('utf-8'))
+
+server_socket.close()
+sock_client.close()
