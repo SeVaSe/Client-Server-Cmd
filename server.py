@@ -2,17 +2,6 @@ import socket
 import subprocess
 import os
 
-# функция по окраске текста
-def colorize(text, color_code):
-    if color_code == 'red': # покраска текста в красный (ошибка)
-        return f'\033[91m{text}\033[0m'
-    elif color_code == 'yellow': # покраска текста в желтый (предупреждение)
-        return f'\033[93m{text}\033[0m'
-    elif color_code == 'green': # покраска текста в зеленый (успешно)
-        return f'\033[92m{text}\033[0m'
-    else:
-        return f'{text}'
-
 
 
 HOST, PORT = 'localhost', 12345
@@ -34,7 +23,7 @@ print(f'Клиент подключен: [*{sock_adress}*]  [*{sock_client}*]')
 while True:
     cmd = sock_client.recv(1024).decode('utf-8')
 
-    if cmd == None:
+    if cmd is None:
         break
 
     print(f'Команда от клиента: [- {cmd} -]')
@@ -61,15 +50,17 @@ while True:
         # # выполнение команд
         # output = subprocess.check_output(cmd, shell=True)
         # answer = output.decode('cp866')
-    except subprocess.CalledProcessError as e:
+    except Exception as e:
         answer = str(e)
+
 
     # отправка ответа
     sock_client.sendall(answer.encode('utf-8'))
 
+
+
 server_socket.close()
 sock_client.close()
-
 
 
 
