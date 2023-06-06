@@ -21,7 +21,7 @@ print(f'Клиент подключен: [*{sock_adress}*]  [*{sock_client}*]')
 while True:
     cmd = sock_client.recv(1024).decode('utf-8')
 
-    if cmd == None:
+    if cmd is None:
         break
 
     print(f'Команда от клиента: [- {cmd} -]')
@@ -48,11 +48,14 @@ while True:
         # # выполнение команд
         # output = subprocess.check_output(cmd, shell=True)
         # answer = output.decode('cp866')
-    except subprocess.CalledProcessError as e:
+    except Exception as e:
         answer = str(e)
+
 
     # отправка ответа
     sock_client.sendall(answer.encode('utf-8'))
+
+
 
 server_socket.close()
 sock_client.close()
