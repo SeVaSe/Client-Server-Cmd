@@ -8,7 +8,11 @@ HOST, PORT = 'adminLOG', 8080
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # сокет;  IPv4, TPC
 server_socket.bind((HOST, PORT))
 
+# прослушивание клиентов (ожидание их подключения)
+server_socket.listen(5)
+print('Сервер был запущен... Ожидает подключение клиента...')
 
+# подключен клиент
 
 
 
