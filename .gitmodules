@@ -1,0 +1,3 @@
+[submodule "clitent_sock"]
+	path = clitent_sock
+	url = https://github.com/SeVaSe/clitent_sock.git

@@ -45,7 +45,7 @@ while True:
                                    stdin=subprocess.PIPE)
         output, error = process.communicate()
 
-        # проверка винда или линукс это, для установки соотвествующей кодировки
+        # проверка винда или линукс это, для установки соотвествующей кодировки, чтобы русский текст выводился и на линукс, и на винде
         if output:
             if os.name == 'nt':
                 answer = output.decode('cp866')
