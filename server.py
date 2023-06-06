@@ -2,6 +2,16 @@ import socket
 import subprocess
 import os
 
+# функция по окраске текста
+def colorize(text, color_code):
+    if color_code == 'red': # покраска текста в красный (ошибка)
+        return f'\033[91m{text}\033[0m'
+    elif color_code == 'yellow': # покраска текста в желтый (предупреждение)
+        return f'\033[93m{text}\033[0m'
+    elif color_code == 'green': # покраска текста в зеленый (успешно)
+        return f'\033[92m{text}\033[0m'
+    else:
+        return f'{text}'
 
 
 HOST, PORT = 'localhost', 12345
@@ -12,11 +22,11 @@ server_socket.bind((HOST, PORT))
 
 # прослушивание клиентов (ожидание их подключения)
 server_socket.listen(5)
-print('Сервер был запущен... Ожидает подключение клиента...')
+print(colorize('Сервер был запущен... Ожидает подключение клиента...', 'green'))
 
 # подключен клиент
 sock_client, sock_adress = server_socket.accept()
-print(f'Клиент подключен: [*{sock_adress}*]  [*{sock_client}*]')
+print(colorize(f'Клиент подключен: [*{sock_adress}*]  [*{sock_client}*]\n', 'green'))
 
 
 # обработка комманд cmd
@@ -26,7 +36,7 @@ while True:
     if cmd is None:
         break
 
-    print(f'Команда от клиента: [- {cmd} -]')
+    print(f'{colorize("Команда от клиента:", "yellow")} [- {cmd} -]')
 
 
     try:
