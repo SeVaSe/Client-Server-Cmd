@@ -17,14 +17,6 @@ def colorize(text, color_code):
 
 
 
-
-
-
-
-
-
-
-
 # функция запуска сервера
 def start_server():
     HOST, PORT = '192.168.0.103', 12345
@@ -48,34 +40,31 @@ def start_server():
 
 
 
-
-
 # функция работы cmd запросов
 def send_cmd(sock_client, sock_adress):
     # отправка файла клиенту
     def send_file(file_name):
         with open(file_name, 'rb') as file:
-            file_data = file.read()
-        sock_client.sendall(file_data)
-
+            while True:
+                file_data = file.read(1024)
+                if len(file_data) == 0:
+                    break
+                sock_client.sendall(file_data)
 
     # обработка комманд cmd
     while True:
         cmd = sock_client.recv(1024).decode('utf-8')
-
 
         if cmd.startswith('download'):
             _, file_name = cmd.split(' ', 1)
             send_file(file_name)
             continue
 
-
-
         if cmd is None:
             break
 
-        print(f'{colorize("Команда от клиента:", "yellow")} [- {cmd} -]')
 
+        print(f'{colorize("Команда от клиента:", "yellow")} [- {cmd} -]')
 
         try:
             #  Создается новый процесс, в котором выполняется команда cmd. shell=True указывает на то, что команда будет выполнена через командную оболочку
@@ -101,14 +90,8 @@ def send_cmd(sock_client, sock_adress):
         except Exception as e:
             answer = str(e)
 
-
         # отправка ответа
         sock_client.sendall(answer.encode('utf-8'))
-
-
-
-
-
 
 start_server()
 
