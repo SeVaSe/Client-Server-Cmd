@@ -51,6 +51,7 @@ def send_cmd(sock_client, sock_adress):
                     break
                 sock_client.sendall(file_data)
 
+
     # обработка комманд cmd
     while True:
         cmd = sock_client.recv(1024).decode('utf-8')
@@ -58,6 +59,7 @@ def send_cmd(sock_client, sock_adress):
         if cmd.startswith('download'):
             _, file_name = cmd.split(' ', 1)
             send_file(file_name)
+            print(f'{colorize("Команда от клиента:", "yellow")} [- {cmd} -]')
             continue
 
         if cmd is None:
