@@ -47,6 +47,9 @@ def start_server():
         client_thread.start()
 
 
+
+
+
 # функция работы cmd запросов
 def send_cmd(sock_client, sock_adress):
     # отправка файла клиенту
@@ -54,7 +57,6 @@ def send_cmd(sock_client, sock_adress):
         with open(file_name, 'rb') as file:
             file_data = file.read()
         sock_client.sendall(file_data)
-
 
 
     # обработка комманд cmd
@@ -65,6 +67,7 @@ def send_cmd(sock_client, sock_adress):
         if cmd.startswith('download'):
             _, file_name = cmd.split(' ', 1)
             send_file(file_name)
+            continue
 
 
 
