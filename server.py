@@ -1,3 +1,4 @@
+import select
 import socket
 import subprocess
 import os
@@ -52,6 +53,23 @@ def send_cmd(sock_client, sock_adress):
                 sock_client.sendall(file_data)
 
 
+    def receiv_file(file_path):
+        sock_client.sendall(f'upload {file_path}'.encode('utf-8'))
+        with open(file_path, 'wb') as file:
+            while True:
+                readble, _, _ = select.select([sock_client], [], [], 1.0)
+                if readble:
+                    file_data = sock_client.recv(1024)
+                    if not file_data:
+                        break
+                    file.write(file_data)
+                else:
+                    break
+
+
+
+
+
     # обработка комманд cmd
     while True:
         cmd = sock_client.recv(1024).decode('utf-8')
@@ -60,6 +78,11 @@ def send_cmd(sock_client, sock_adress):
             _, file_name = cmd.split(' ', 1)
             send_file(file_name)
             print(f'{colorize("Команда от клиента:", "yellow")} [- {cmd} -]')
+            continue
+        if cmd.startswith('upload'):
+            _, file_path = cmd.split(' ', 1)
+            receiv_file(file_path)
+            print(f'{colorize("Был получен файл от клиента", "green")}')
             continue
 
         if cmd is None:
