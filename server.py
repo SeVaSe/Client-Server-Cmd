@@ -52,7 +52,7 @@ def send_cmd(sock_client, sock_adress):
                     break
                 sock_client.sendall(file_data)
 
-
+    # принятие файлов от клиента
     def receiv_file(file_path):
         sock_client.sendall(f'upload {file_path}'.encode('utf-8'))
         with open(file_path, 'wb') as file:
@@ -68,12 +68,11 @@ def send_cmd(sock_client, sock_adress):
 
 
 
-
-
     # обработка комманд cmd
     while True:
         cmd = sock_client.recv(1024).decode('utf-8')
 
+        # определение загрузить или отправить файл
         if cmd.startswith('download'):
             _, file_name = cmd.split(' ', 1)
             send_file(file_name)
@@ -90,6 +89,14 @@ def send_cmd(sock_client, sock_adress):
 
 
         print(f'{colorize("Команда от клиента:", "yellow")} [- {cmd} -]')
+
+        # отключение клиентов
+        if cmd == 'closeCL':
+            print(f'{colorize("Клиент был закрыт".upper(), "red")}\n')
+            sock_client.sendall('Клиент отключен'.encode('utf-8'))
+            sock_client.close()
+
+
 
         try:
             #  Создается новый процесс, в котором выполняется команда cmd. shell=True указывает на то, что команда будет выполнена через командную оболочку
