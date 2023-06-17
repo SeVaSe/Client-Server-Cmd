@@ -3,6 +3,8 @@ import socket
 import subprocess
 import os
 import threading
+import signal
+
 
 
 # функция по окраске текста
@@ -37,7 +39,13 @@ def start_server():
         print(colorize(f'Клиент подключен: [*{sock_adress}*]  [*{sock_client}*]\n', 'green'))
 
         client_thread = threading.Thread(target=send_cmd, args=(sock_client, sock_adress))
+
+
         client_thread.start()
+
+
+
+
 
 
 
@@ -90,11 +98,18 @@ def send_cmd(sock_client, sock_adress):
 
         print(f'{colorize("Команда от клиента:", "yellow")} [- {cmd} -]')
 
+
         # отключение клиентов
         if cmd == 'closeCL':
             print(f'{colorize("Клиент был закрыт".upper(), "red")}\n')
             sock_client.sendall('Клиент отключен'.encode('utf-8'))
             sock_client.close()
+        elif cmd == 'closeSRV':
+            print(f'{colorize("Сервер был выключен".upper(), "red")}\n')
+            sock_client.sendall('Сервер был выключен'.encode('utf-8'))
+            sock_client.close()
+
+
 
 
 
@@ -103,6 +118,7 @@ def send_cmd(sock_client, sock_adress):
             process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                        stdin=subprocess.PIPE)
             output, error = process.communicate()
+
 
             # проверка винда или линукс это, для установки соотвествующей кодировки, чтобы русский текст выводился и на линукс, и на винде
             if output:
@@ -122,8 +138,13 @@ def send_cmd(sock_client, sock_adress):
         except Exception as e:
             answer = str(e)
 
+
+
+
         # отправка ответа
         sock_client.sendall(answer.encode('utf-8'))
 
+
 start_server()
+
 
