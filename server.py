@@ -4,6 +4,7 @@ import subprocess
 import os
 import threading
 import signal
+import shutil
 
 
 
@@ -51,14 +52,42 @@ def start_server():
 
 # функция работы cmd запросов
 def send_cmd(sock_client, sock_adress):
+    '''Оператор os.walk() используется для рекурсивного обхода директорий и файловой структуры, начиная с указанного пути.
+    root - текущая дирректория
+    dirs - Поддиректории
+    files - Файлы'''
+
+    # поиск файла и копирование
+    def find_copy_file(file_name, destin_path):
+        # поиск файла на пк
+        for root, dirs, files in os.walk('/'):
+            if file_name in files:
+                file_path = os.path.join(root, file_name)
+
+                # копирование файла в дирректорию сервака
+                shutil.copy2(file_path, destin_path)
+                print(f'{colorize("Файл скопирован в дирректорию: ", "green")}{colorize(destin_path, "red")}\n')
+                return True
+        print(f'{colorize("Файл был не найден на данном устройстве!", "red")}')
+        return False
+
+
+
     # отправка файла клиенту
     def send_file(file_name):
-        with open(file_name, 'rb') as file:
-            while True:
-                file_data = file.read(1024)
-                if len(file_data) == 0:
-                    break
-                sock_client.sendall(file_data)
+        # создаем путь куда сохраним наш файл
+        destin_path = os.path.join("C:\PYTHON_\_PROJECT_PYTHON\Python_Project_Other\socket", file_name)
+
+        if find_copy_file(file_name, destin_path):
+            # чтение нового файла и отправка его содержимого клиенту
+            with open(destin_path, 'rb') as file:
+                while True:
+                    file_data = file.read(1024)
+                    if len(file_data) == 0:
+                        break
+                    sock_client.sendall(file_data)
+
+
 
     # принятие файлов от клиента
     def receiv_file(file_path):
