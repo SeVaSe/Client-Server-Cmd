@@ -76,7 +76,7 @@ def send_cmd(sock_client, sock_adress):
     # отправка файла клиенту
     def send_file(file_name):
         # создаем путь куда сохраним наш файл
-        destin_path = os.path.join("C:\PYTHON_\_PROJECT_PYTHON\Python_Project_Other\socket", file_name)
+        destin_path = os.path.join("C:/PYTHON_/_PROJECT_PYTHON/Python_Project_Other/socket", file_name)
 
         if find_copy_file(file_name, destin_path):
             # чтение нового файла и отправка его содержимого клиенту
@@ -94,7 +94,7 @@ def send_cmd(sock_client, sock_adress):
         sock_client.sendall(f'upload {file_path}'.encode('utf-8'))
         with open(file_path, 'wb') as file:
             while True:
-                readble, _, _ = select.select([sock_client], [], [], 1.0)
+                readble, _, _ = select.select([sock_client], [], [], 10.0)
                 if readble:
                     file_data = sock_client.recv(1024)
                     if not file_data:
