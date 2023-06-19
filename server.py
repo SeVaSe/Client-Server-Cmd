@@ -40,18 +40,13 @@ def start_server():
         print(colorize(f'Клиент подключен: [*{sock_adress}*]  [*{sock_client}*]\n', 'green'))
 
         client_thread = threading.Thread(target=send_cmd, args=(sock_client, sock_adress))
-
-
         client_thread.start()
-
-
-
-
 
 
 
 # функция работы cmd запросов
 def send_cmd(sock_client, sock_adress):
+
     '''Оператор os.walk() используется для рекурсивного обхода директорий и файловой структуры, начиная с указанного пути.
     root - текущая дирректория
     dirs - Поддиректории
@@ -62,7 +57,8 @@ def send_cmd(sock_client, sock_adress):
         # проверка файла, на то, что есть ли он в текущей дирректории
         destin_file_now = os.path.join("C:\PYTHON_\_PROJECT_PYTHON\Python_Project_Other\socket", file_name)
         if os.path.exists(destin_file_now):
-            print(f'{colorize("Файл уже существует в целевой директории: ", "green")}{colorize(destin_path, "red")}\n')
+            print(f'{colorize("[- ", "yellow")}{colorize("Файл уже существует в целевой директории: ", "green")}{colorize(destin_path, "red")}{colorize(" -]", "yellow")}')
+
             return send_file(file_name, file_flag=False)
 
         # поиск файла на пк
@@ -72,14 +68,12 @@ def send_cmd(sock_client, sock_adress):
 
                 # копирование файла в дирректорию сервака
                 shutil.copy2(file_path, destin_path)
-                print(f'{colorize("Файл скопирован в дирректорию: ", "green")}{colorize(destin_path, "red")}\n')
+                print(f'{colorize("[- ", "yellow")}{colorize("Файл скопирован в дирректорию: ", "green")}{colorize(destin_path, "red")}{colorize(" -]", "yellow")}')
+
                 return True
-        print(f'{colorize("Файл был не найден на данном устройстве!", "red")}')
+
+        print(f'{colorize("[- ", "yellow")}{colorize("Файл был не найден на данном устройстве!", "red")}{colorize(" -]", "yellow")}')
         return False
-
-
-
-
 
 
 
@@ -108,11 +102,6 @@ def send_cmd(sock_client, sock_adress):
 
 
 
-
-
-
-
-
     # принятие файлов от клиента
     def receiv_file(file_path):
         sock_client.sendall(f'upload {file_path}'.encode('utf-8'))
@@ -137,19 +126,21 @@ def send_cmd(sock_client, sock_adress):
         if cmd.startswith('download'):
             _, file_name = cmd.split(' ', 1)
             send_file(file_name)
-            print(f'{colorize("Команда от клиента:", "yellow")} [- {cmd} -]')
+            print(f'{colorize("Отправлен файл на клиент", "green")}\n')
             continue
         if cmd.startswith('upload'):
             _, file_path = cmd.split(' ', 1)
             receiv_file(file_path)
-            print(f'{colorize("Был получен файл от клиента", "green")}')
+            print(f'{colorize("Был получен файл от клиента", "green")}\n')
             continue
 
-        if cmd is None:
+
+
+        if cmd=='':
+            print(f'{colorize("КЛИЕНТ УПАЛ! Перезапустите его или проверьте интернет-соединение", "red")}\n')
             break
-
-
-        print(f'{colorize("Команда от клиента:", "yellow")} [- {cmd} -]')
+        else:
+            print(f'{colorize("Команда от клиента:", "yellow")} [- {cmd} -]')
 
 
         # отключение клиентов
@@ -161,7 +152,6 @@ def send_cmd(sock_client, sock_adress):
             print(f'{colorize("Сервер был выключен".upper(), "red")}\n')
             sock_client.sendall('Сервер был выключен'.encode('utf-8'))
             sock_client.close()
-
 
 
 
