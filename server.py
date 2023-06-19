@@ -21,6 +21,87 @@ def colorize(text, color_code):
 
 
 
+# КЛАСС ДЛЯ РАБОТЫ С ДОПОЛНИТЕЛЬНЫМИ КОМАНДАМИ
+class DopCmdCommands:
+    # отключение клиента
+    def closeCL(self):
+        print(f'{colorize("Клиент был закрыт".upper(), "red")}\n')
+        self.sock_client.sendall('Клиент отключен'.encode('utf-8'))
+        self.sock_client.close()
+
+    # отключение сервера
+    def closeSRV(self):
+        print(f'{colorize("Сервер был выключен".upper(), "red")}\n')
+        self.sock_client.sendall('Сервер был выключен'.encode('utf-8'))
+        self.sock_client.close()
+        os.kill(os.getpid(), signal.SIGINT)  # Прерывание основного цикла
+
+
+
+# КЛАСС ДЛЯ РАБОТЫ С ФАЙЛАМИ
+class WorkWithFiles:
+    # поиск файла и копирование
+    def find_copy_file(self, file_name, destin_path):
+        # проверка файла, на то, что есть ли он в текущей директории
+        destin_file_now = os.path.join("C:\PYTHON_\_PROJECT_PYTHON\Python_Project_Other\socket", file_name)
+        if os.path.exists(destin_file_now):
+            print(
+                f'{colorize("[- ", "yellow")}{colorize("Файл уже существует в целевой директории: ", "green")}{colorize(destin_path, "red")}{colorize(" -]", "yellow")}')
+            return self.send_file(file_name, file_flag=False)
+
+        # поиск файла на пк
+        for root, dirs, files in os.walk('/'):
+            if file_name in files:
+                file_path = os.path.join(root, file_name)
+
+                # копирование файла в дирректорию сервера
+                shutil.copy2(file_path, destin_path)
+                print(
+                    f'{colorize("[- ", "yellow")}{colorize("Файл скопирован в дирректорию: ", "green")}{colorize(destin_path, "red")}{colorize(" -]", "yellow")}')
+                return True
+
+        print(f'{colorize("[- ", "yellow")}{colorize("Файл был не найден на данном устройстве!", "red")}{colorize(" -]", "yellow")}')
+        return False
+
+    # отправка файла клиенту
+    def send_file(self, file_name, file_flag=True):
+        if file_flag:
+            # создаем путь, куда сохраним наш файл
+            destin_path = os.path.join("C:/PYTHON_/_PROJECT_PYTHON/Python_Project_Other/socket/cacheSRV", file_name)
+            self.sock_client.sendall(destin_path.encode('utf-8'))
+
+            if self.find_copy_file(file_name, destin_path):
+                # чтение нового файла и отправка его содержимого клиенту
+                with open(destin_path, 'rb') as file:
+                    while True:
+                        file_data = file.read(1024)
+                        if len(file_data) == 0:
+                            break
+                        self.sock_client.sendall(file_data)
+        else:
+            with open(file_name, 'rb') as file:
+                while True:
+                    file_data = file.read(1024)
+                    if len(file_data) == 0:
+                        break
+                    self.sock_client.sendall(file_data)
+
+    # принятие файлов от клиента
+    def receiv_file(self, file_path):
+        self.sock_client.sendall(f'upload {file_path}'.encode('utf-8'))
+        with open(file_path, 'wb') as file:
+            while True:
+                readable, _, _ = select.select([self.sock_client], [], [], 10.0)
+                if readable:
+                    file_data = self.sock_client.recv(1024)
+                    if not file_data:
+                        break
+                    file.write(file_data)
+                else:
+                    break
+
+
+
 # функция запуска сервера
 def start_server():
     HOST, PORT = '192.168.0.103', 12345
@@ -46,113 +127,48 @@ def start_server():
 
 # функция работы cmd запросов
 def send_cmd(sock_client, sock_adress):
+    # класс, для обработки дополнительных команд
+    dop_cmd_commands = DopCmdCommands()
+    dop_cmd_commands.sock_client = sock_client
+
+    # класс, для работы с файлами
+    work_with_files = WorkWithFiles()
+    work_with_files.sock_client = sock_client
+
+
 
     '''Оператор os.walk() используется для рекурсивного обхода директорий и файловой структуры, начиная с указанного пути.
     root - текущая дирректория
     dirs - Поддиректории
     files - Файлы'''
 
-    # поиск файла и копирование
-    def find_copy_file(file_name, destin_path):
-        # проверка файла, на то, что есть ли он в текущей дирректории
-        destin_file_now = os.path.join("C:\PYTHON_\_PROJECT_PYTHON\Python_Project_Other\socket", file_name)
-        if os.path.exists(destin_file_now):
-            print(f'{colorize("[- ", "yellow")}{colorize("Файл уже существует в целевой директории: ", "green")}{colorize(destin_path, "red")}{colorize(" -]", "yellow")}')
-
-            return send_file(file_name, file_flag=False)
-
-        # поиск файла на пк
-        for root, dirs, files in os.walk('/'):
-            if file_name in files:
-                file_path = os.path.join(root, file_name)
-
-                # копирование файла в дирректорию сервака
-                shutil.copy2(file_path, destin_path)
-                print(f'{colorize("[- ", "yellow")}{colorize("Файл скопирован в дирректорию: ", "green")}{colorize(destin_path, "red")}{colorize(" -]", "yellow")}')
-
-                return True
-
-        print(f'{colorize("[- ", "yellow")}{colorize("Файл был не найден на данном устройстве!", "red")}{colorize(" -]", "yellow")}')
-        return False
-
-
-
-    # отправка файла клиенту
-    def send_file(file_name, file_flag=True):
-        if file_flag:
-            # создаем путь куда сохраним наш файл
-            destin_path = os.path.join("C:/PYTHON_/_PROJECT_PYTHON/Python_Project_Other/socket/cacheSRV", file_name)
-            sock_client.sendall(destin_path.encode('utf-8'))
-
-            if find_copy_file(file_name, destin_path):
-                # чтение нового файла и отправка его содержимого клиенту
-                with open(destin_path, 'rb') as file:
-                    while True:
-                        file_data = file.read(1024)
-                        if len(file_data) == 0:
-                            break
-                        sock_client.sendall(file_data)
-        else:
-            with open(file_name, 'rb') as file:
-                while True:
-                    file_data = file.read(1024)
-                    if len(file_data) == 0:
-                        break
-                    sock_client.sendall(file_data)
-
-
-
-    # принятие файлов от клиента
-    def receiv_file(file_path):
-        sock_client.sendall(f'upload {file_path}'.encode('utf-8'))
-        with open(file_path, 'wb') as file:
-            while True:
-                readble, _, _ = select.select([sock_client], [], [], 10.0)
-                if readble:
-                    file_data = sock_client.recv(1024)
-                    if not file_data:
-                        break
-                    file.write(file_data)
-                else:
-                    break
-
-
 
     # обработка комманд cmd
     while True:
+
         cmd = sock_client.recv(1024).decode('utf-8')
 
-        # определение загрузить или отправить файл
         if cmd.startswith('download'):
             _, file_name = cmd.split(' ', 1)
-            send_file(file_name)
+            work_with_files.send_file(file_name)
             print(f'{colorize("Отправлен файл на клиент", "green")}\n')
             continue
         if cmd.startswith('upload'):
             _, file_path = cmd.split(' ', 1)
-            receiv_file(file_path)
+            work_with_files.receiv_file(file_path)
             print(f'{colorize("Был получен файл от клиента", "green")}\n')
             continue
 
-
-
-        if cmd=='':
+        if cmd == '':
             print(f'{colorize("КЛИЕНТ УПАЛ! Перезапустите его или проверьте интернет-соединение", "red")}\n')
             break
         else:
             print(f'{colorize("Команда от клиента:", "yellow")} [- {cmd} -]')
 
-
-        # отключение клиентов
         if cmd == 'closeCL':
-            print(f'{colorize("Клиент был закрыт".upper(), "red")}\n')
-            sock_client.sendall('Клиент отключен'.encode('utf-8'))
-            sock_client.close()
+            dop_cmd_commands.closeCL()
         elif cmd == 'closeSRV':
-            print(f'{colorize("Сервер был выключен".upper(), "red")}\n')
-            sock_client.sendall('Сервер был выключен'.encode('utf-8'))
-            sock_client.close()
-
+            dop_cmd_commands.closeSRV()
 
 
 
@@ -161,7 +177,6 @@ def send_cmd(sock_client, sock_adress):
             process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                        stdin=subprocess.PIPE)
             output, error = process.communicate()
-
 
             # проверка винда или линукс это, для установки соотвествующей кодировки, чтобы русский текст выводился и на линукс, и на винде
             if output:
@@ -182,12 +197,15 @@ def send_cmd(sock_client, sock_adress):
             answer = str(e)
 
 
-
-
         # отправка ответа
         sock_client.sendall(answer.encode('utf-8'))
 
 
+# запуск подключений клиентов
 start_server()
+
+
+
+
 
 
