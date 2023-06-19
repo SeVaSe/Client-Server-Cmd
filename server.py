@@ -59,6 +59,12 @@ def send_cmd(sock_client, sock_adress):
 
     # поиск файла и копирование
     def find_copy_file(file_name, destin_path):
+        # проверка файла, на то, что есть ли он в текущей дирректории
+        destin_file_now = os.path.join("C:\PYTHON_\_PROJECT_PYTHON\Python_Project_Other\socket", file_name)
+        if os.path.exists(destin_file_now):
+            print(f'{colorize("Файл уже существует в целевой директории: ", "green")}{colorize(destin_path, "red")}\n')
+            return send_file(file_name, file_flag=False)
+
         # поиск файла на пк
         for root, dirs, files in os.walk('/'):
             if file_name in files:
@@ -73,19 +79,37 @@ def send_cmd(sock_client, sock_adress):
 
 
 
-    # отправка файла клиенту
-    def send_file(file_name):
-        # создаем путь куда сохраним наш файл
-        destin_path = os.path.join("C:/PYTHON_/_PROJECT_PYTHON/Python_Project_Other/socket", file_name)
 
-        if find_copy_file(file_name, destin_path):
-            # чтение нового файла и отправка его содержимого клиенту
-            with open(destin_path, 'rb') as file:
+
+
+
+    # отправка файла клиенту
+    def send_file(file_name, file_flag=True):
+        if file_flag:
+            # создаем путь куда сохраним наш файл
+            destin_path = os.path.join("C:/PYTHON_/_PROJECT_PYTHON/Python_Project_Other/socket/cacheSRV", file_name)
+            sock_client.sendall(destin_path.encode('utf-8'))
+
+            if find_copy_file(file_name, destin_path):
+                # чтение нового файла и отправка его содержимого клиенту
+                with open(destin_path, 'rb') as file:
+                    while True:
+                        file_data = file.read(1024)
+                        if len(file_data) == 0:
+                            break
+                        sock_client.sendall(file_data)
+        else:
+            with open(file_name, 'rb') as file:
                 while True:
                     file_data = file.read(1024)
                     if len(file_data) == 0:
                         break
                     sock_client.sendall(file_data)
+
+
+
+
+
 
 
 
