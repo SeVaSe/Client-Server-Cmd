@@ -16,6 +16,8 @@ def colorize(text, color_code):
         return f'\033[93m{text}\033[0m'
     elif color_code == 'green': # покраска текста в зеленый (успешно)
         return f'\033[92m{text}\033[0m'
+    elif color_code == 'purple':  # Покраска текста в фиолетовый (команды)
+        return f'\033[95m{text}\033[0m'
     else:
         return f'{text}'
 
@@ -36,6 +38,19 @@ class DopCmdCommands:
         self.sock_client.close()
         os.kill(os.getpid(), signal.SIGINT)  # Прерывание основного цикла
 
+    # справка
+    def documentApp(self):
+        help_text = f'''
+{colorize('ДОСТУПНЫЕ ПРОГРАММНЫЕ КОМАНДЫ:', 'green')}
+{'-' * 60}
+{colorize('upload <file_name>', 'purple')} - Загрузить файл на сервер.
+{colorize('download <file_name>', 'purple')} - Скачать файл с сервера.
+{colorize('closeCL', 'purple')} - Закрыть клиента.
+{colorize('closeSRV', 'purple')} - Закрыть сервер.
+{'-' * 60}'''
+
+        self.sock_client.sendall(help_text.encode('utf-8'))
+
 
 
 # КЛАСС ДЛЯ РАБОТЫ С ФАЙЛАМИ
@@ -45,8 +60,7 @@ class WorkWithFiles:
         # проверка файла, на то, что есть ли он в текущей директории
         destin_file_now = os.path.join("C:\PYTHON_\_PROJECT_PYTHON\Python_Project_Other\socket", file_name)
         if os.path.exists(destin_file_now):
-            print(
-                f'{colorize("[- ", "yellow")}{colorize("Файл уже существует в целевой директории: ", "green")}{colorize(destin_path, "red")}{colorize(" -]", "yellow")}')
+            print(f'{colorize("[- ", "yellow")}{colorize("Файл уже существует в целевой директории: ", "green")}{colorize(destin_path, "red")}{colorize(" -]", "yellow")}')
             return self.send_file(file_name, file_flag=False)
 
         # поиск файла на пк
@@ -56,8 +70,7 @@ class WorkWithFiles:
 
                 # копирование файла в дирректорию сервера
                 shutil.copy2(file_path, destin_path)
-                print(
-                    f'{colorize("[- ", "yellow")}{colorize("Файл скопирован в дирректорию: ", "green")}{colorize(destin_path, "red")}{colorize(" -]", "yellow")}')
+                print(f'{colorize("[- ", "yellow")}{colorize("Файл скопирован в дирректорию: ", "green")}{colorize(destin_path, "red")}{colorize(" -]", "yellow")}')
                 return True
 
         print(f'{colorize("[- ", "yellow")}{colorize("Файл был не найден на данном устройстве!", "red")}{colorize(" -]", "yellow")}')
@@ -68,21 +81,21 @@ class WorkWithFiles:
         if file_flag:
             # создаем путь, куда сохраним наш файл
             destin_path = os.path.join("C:/PYTHON_/_PROJECT_PYTHON/Python_Project_Other/socket/cacheSRV", file_name)
-            self.sock_client.sendall(destin_path.encode('utf-8'))
+            #self.sock_client.sendall(destin_path.encode('utf-8'))
 
             if self.find_copy_file(file_name, destin_path):
                 # чтение нового файла и отправка его содержимого клиенту
                 with open(destin_path, 'rb') as file:
                     while True:
                         file_data = file.read(1024)
-                        if len(file_data) == 0:
+                        if not file_data:
                             break
                         self.sock_client.sendall(file_data)
         else:
             with open(file_name, 'rb') as file:
                 while True:
                     file_data = file.read(1024)
-                    if len(file_data) == 0:
+                    if not file_data:
                         break
                     self.sock_client.sendall(file_data)
 
@@ -163,12 +176,14 @@ def send_cmd(sock_client, sock_adress):
             print(f'{colorize("КЛИЕНТ УПАЛ! Перезапустите его или проверьте интернет-соединение", "red")}\n')
             break
         else:
-            print(f'{colorize("Команда от клиента:", "yellow")} [- {cmd} -]')
+            print(f'{colorize("Команда от клиента:", "yellow")} [- {colorize(cmd, "purple")} -]')
 
         if cmd == 'closeCL':
             dop_cmd_commands.closeCL()
         elif cmd == 'closeSRV':
             dop_cmd_commands.closeSRV()
+        elif cmd == 'document':
+            dop_cmd_commands.documentApp()
 
 
 
