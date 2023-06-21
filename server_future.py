@@ -47,7 +47,6 @@ class DopCmdCommands:
 {colorize('download <file_name>', 'purple')} - Скачать файл с сервера.
 {colorize('closeCL', 'purple')} - Закрыть клиента.
 {colorize('closeSRV', 'purple')} - Закрыть сервер.
-{colorize('MainMenu', 'purple')} - Работает на клиентах, чтобы перейти обратно в главное меню.
 {'-' * 60}'''
 
         self.sock_client.sendall(help_text.encode('utf-8'))
