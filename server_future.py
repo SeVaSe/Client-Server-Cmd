@@ -5,8 +5,13 @@ import os
 import threading
 import signal
 import shutil
+import uuid
 
 
+
+
+# Список подключенных клиентов
+clients = {}
 
 # функция по окраске текста
 def colorize(text, color_code):
@@ -99,7 +104,8 @@ class WorkWithFiles:
                         break
                     self.sock_client.sendall(file_data)
 
-    # принятие файлов от клиента
+
+# принятие файлов от клиента
     def receiv_file(self, file_path):
         self.sock_client.sendall(f'upload {file_path}'.encode('utf-8'))
         with open(file_path, 'wb') as file:
@@ -114,6 +120,11 @@ class WorkWithFiles:
                     break
 
 
+
+# генератор ключей UID
+def generate_uid():
+    uid = str(uuid.uuid4())[:8]
+    return uid
 
 # функция запуска сервера
 def start_server():
@@ -133,13 +144,95 @@ def start_server():
         sock_client, sock_adress = server_socket.accept()
         print(colorize(f'Клиент подключен: [*{sock_adress}*]  [*{sock_client}*]\n', 'green'))
 
-        client_thread = threading.Thread(target=send_cmd, args=(sock_client, sock_adress))
+        # добавление к uid -> данные клиентов
+        client_uid = generate_uid()
+        clients[client_uid] = {
+            'socket': sock_client,
+            'adress': sock_adress
+        }
+        sock_client.sendall(f'Ваш uuid -> {client_uid}'.encode('utf-8'))
+
+
+        client_thread = threading.Thread(target=send_cmd, args=(sock_client, sock_adress, client_uid))
         client_thread.start()
 
 
 
+
+
+
+################################################################
+# сообщения
+def handle_client_messages(msng):
+    client_uid, cmd = msng.split(':', 1)
+
+    if client_uid in clients:
+        sock_client = clients[client_uid]['socket'] # распаковка, достаем сокет клиента
+        sock_client.sendall(f'⚫ {msng}'.encode('utf-8'))
+
+
+def handle_client_cmd(com):
+    client_uid, cmd = com.split(':', 1)
+
+    try:
+        #  Создается новый процесс, в котором выполняется команда cmd. shell=True указывает на то, что команда будет выполнена через командную оболочку
+        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                   stdin=subprocess.PIPE)
+        output, error = process.communicate()
+
+        # проверка винда или линукс это, для установки соотвествующей кодировки, чтобы русский текст выводился и на линукс, и на винде
+        if output:
+            if os.name == 'nt':
+                answer = output.decode('cp866')
+            else:
+                answer = output.decode('utf-8')
+        else:
+            if os.name == 'nt':
+                answer = error.decode('cp866')
+            else:
+                answer = error.decode('utf-8')
+
+        # # выполнение команд
+        # output = subprocess.check_output(cmd, shell=True)
+        # answer = output.decode('cp866')
+    except Exception as e:
+        answer = str(e)
+
+
+    # отправка ответа
+    if client_uid in clients:
+        sock_client = clients[client_uid]['socket'] # распаковка, достаем сокет клиента
+        sock_client.sendall(answer.encode('utf-8'))
+
+
+
+# отправка файла
+# def send_file_client(file_path):
+#     client_uid, file_name = file_path.split(':', 1)
+#
+#     if client_uid in clients:
+#         sock_client = clients[client_uid]['socket'] # распаковка, достаем сокет клиента
+#         # команда для получателя
+#         sock_client.sendall('recfilecl'.encode('utf-8'))
+#         # имя файла для получателя
+#         sock_client.sendall(file_name.encode('utf-8'))
+#
+#         with open(file_name, 'rb') as file:
+#             data = file.read(1024)
+#             while data:
+#                 sock_client.sendall(data)
+#                 data = file.read(1024)
+#         print('ФАЙЛ БЫЛ ПЕРЕДАН ДРУГОМУ КЛИЕНТУ')
+#     else:
+#         print('Клиент не найден')
+
+
+
+################################################################
+
+
 # функция работы cmd запросов
-def send_cmd(sock_client, sock_adress):
+def send_cmd(sock_client, sock_adress, client_uid):
     # класс, для обработки дополнительных команд
     dop_cmd_commands = DopCmdCommands()
     dop_cmd_commands.sock_client = sock_client
@@ -171,6 +264,20 @@ def send_cmd(sock_client, sock_adress):
             work_with_files.receiv_file(file_path)
             print(f'{colorize("Был получен файл от клиента", "green")}\n')
             continue
+        if cmd.startswith('send'):
+            _, msng = cmd.split(' ', 1)
+            handle_client_messages(msng)
+            print(f'СООБЩЕНИЕ В ОБРАБОТКЕ')
+        if cmd.startswith('sendCMD'):
+            _, com = cmd.split(' ', 1)
+            handle_client_cmd(com)
+            print(f'КОМАНДА В ОБРАБОТКЕ И СКОРО ОТПРАВИТСЯ ДРУГОМУ КЛИЕНТУ')
+        # if cmd.startswith('sendfile'):
+        #     _, file_path = cmd.split(' ', 1)
+        #     send_file_client(file_path)
+        #     print(f'ФАЙЛ ОТПРАВЛЕН ДРУГОМУ КЛИЕНТУ!')
+            continue
+
 
         if cmd == '':
             print(f'{colorize("КЛИЕНТ УПАЛ! Перезапустите его или проверьте интернет-соединение", "red")}\n')
@@ -184,7 +291,6 @@ def send_cmd(sock_client, sock_adress):
             dop_cmd_commands.closeSRV()
         elif cmd == 'document':
             dop_cmd_commands.documentApp()
-
 
 
         try:
@@ -212,15 +318,14 @@ def send_cmd(sock_client, sock_adress):
             answer = str(e)
 
 
+
         # отправка ответа
         sock_client.sendall(answer.encode('utf-8'))
 
 
+
 # запуск подключений клиентов
 start_server()
-
-
-
 
 
 
